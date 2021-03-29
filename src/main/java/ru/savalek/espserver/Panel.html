@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <title>ESP Control Panel</title></head>
+<body>
+<button id='gpio-button'>Gpio</button>
+<br/>
+<button id='led-button'>LED</button>
+<br/>
+<label class="switch">
+     Лампа
+    <input id="lamp-checkbox" type="checkbox">
+</label>
+<br/>
+<input style="width: 100%;" type="range" min="1" max="255" value="255" class="slider" id="brightness">
+<br/>
+<div id='output'
+     style="border: black solid 1px;
+     border-radius: 10px;
+     margin: 10px;
+     padding: 5px;
+     min-height: 20px;
+     background-color: rgba(0,0,0,0.07);
+     box-shadow: 10px 10px 22px -5px rgba(0,0,0,0.49);">
+</div>
+<script type='application/javascript'>
+    let isEnable = true;
+    let ledIsEnable = true;
+    let lampIsEnable = false;
+
+    function httpGet(theUrl) {
+        let xmlHttp = new XMLHttpRequest();
+        xmlHttp.open('GET', theUrl, false);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+
+    let button = document.getElementById('gpio-button');
+    button.addEventListener('click', () => {
+        isEnable = !isEnable;
+        button.innerText = isEnable ? 'Выключить GPIO' : 'Включить GPIO';
+        let code = isEnable ? 1 : 0;
+        let response = httpGet(`${document.location.origin}/gpio/${code}`);
+        document.getElementById('output').innerHTML = response;
+    }, false);
+
+    let ledButton = document.getElementById('led-button');
+    ledButton.addEventListener('click', () => {
+        ledIsEnable = !ledIsEnable;
+        ledButton.innerText = ledIsEnable ? 'Выключить LED' : 'Включить LED';
+        let command = ledIsEnable ? 'on' : 'off';
+        let response = httpGet(`${document.location.origin}/led/${command}`);
+        document.getElementById('output').innerHTML = response;
+    }, false);
+
+    let lampCheckbox = document.getElementById('lamp-checkbox');
+    lampCheckbox.addEventListener('click', () => {
+        lampIsEnable = !lampIsEnable;
+        let command = lampIsEnable ? 'on' : 'off';
+        let response = httpGet(`${document.location.origin}/lamp/${command}`);
+        document.getElementById('output').innerHTML = response;
+    }, false);
+
+
+    let br = {
+        committedBr: 255,
+        currentBr: 255
+    };
+    setInterval(() => {
+        if (br.commitedBr !== br.currentBr) {
+            br.commitedBr = br.currentBr;
+            httpGet(`${document.location.origin}/brightness/${br.commitedBr}`);
+        }
+    }, 100);
+    let brightnessSlider = document.getElementById('brightness');
+    brightnessSlider.addEventListener('input', () => {
+        br.currentBr = brightnessSlider.value;
+    }, false);
+</script>
+</body>
+</html>
